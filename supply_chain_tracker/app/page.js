@@ -75,11 +75,13 @@ const Page = () => {
     setCompleteModal = {setCompleteModal}
     completeShipment = {completeShipment}
     />
-    <GetShipment
-    getModal = {getModal}
-    setGetModal = {setGetModal}
-    getShipment = {getShipment}
-    />
+   <GetShipment
+    getModal={getModal}
+    getShipment={getShipment}
+    getShipmentsCount={getShipmentsCount}
+    currentUser={currentUser}
+    setGetModal={setGetModal}
+/>
     <StartShipment
     startModal = {startModal}
     setStartModal = {setStartModal}

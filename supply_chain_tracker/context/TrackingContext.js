@@ -7,7 +7,7 @@ import { ethers } from "ethers";
 import tracking from "../context/Tracking.json";
 
 // Replace with your actual deployed contract address on Sepolia
-const ContractAddress = "0xd8602075C6E996B36dD2eEBea87BA16209a102ff"; 
+const ContractAddress = "0xd8602075C6E996B36dD2eEBea87BA16209a102ff";
 const ContractABI = tracking.abi;
 
 // FETCH SMART CONTRACT
@@ -82,6 +82,7 @@ export const TrackingProvider = ({ children }) => {
             return 0;
         }
     };
+
     // GET ALL SHIPMENTS
     const getAllShipment = async () => {
         try {
@@ -89,16 +90,13 @@ export const TrackingProvider = ({ children }) => {
             const signer = await provider.getSigner();
             const contract = fetchContract(signer);
 
-            // Get the current user's address
             if (!window.ethereum) throw new Error("Install MetaMask");
             const accounts = await window.ethereum.request({ method: "eth_accounts" });
             const currentUser = accounts[0];
 
-            // Get the count of shipments for the current user
             const shipmentsCount = await contract.getShipmentsCount(currentUser);
             const shipments = [];
 
-            // Loop through the count and retrieve each shipment
             for (let i = 0; i < Number(shipmentsCount); i++) {
                 const shipment = await contract.getShipment(currentUser, i);
                 shipments.push({
@@ -119,6 +117,7 @@ export const TrackingProvider = ({ children }) => {
             return [];
         }
     };
+
     // COMPLETE SHIPMENT
     const completeShipment = async ({ receiver, index }) => {
         try {
