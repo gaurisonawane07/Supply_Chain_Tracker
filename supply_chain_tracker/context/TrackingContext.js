@@ -4,7 +4,7 @@ import Web3Modal from "web3modal";
 import { ethers } from "ethers";
 
 // INTERNAL IMPORT
-import tracking from "../context/Tracking.json";
+import tracking from "./Tracking.json";
 
 // Replace with your actual deployed contract address on Sepolia
 const ContractAddress = "0xd8602075C6E996B36dD2eEBea87BA16209a102ff";
@@ -12,242 +12,253 @@ const ContractABI = tracking.abi;
 
 // FETCH SMART CONTRACT
 const fetchContract = (signerOrProvider) =>
-    new ethers.Contract(ContractAddress, ContractABI, signerOrProvider);
+  new ethers.Contract(ContractAddress, ContractABI, signerOrProvider);
 
 export const TrackingContext = React.createContext();
 
 export const TrackingProvider = ({ children }) => {
-    // STATE VARIABLE
-    const DappName = "Product Tracking Dapp";
-    const [currentUser, setCurrentUser] = useState("");
+  // STATE VARIABLE
+  const DappName = "Product Tracking Dapp";
+  const [currentUser, setCurrentUser] = useState("");
+  const [shipments, setShipments] = useState([]); // Add shipments state
 
-    // CREATE SHIPMENT
-    const createShipment = async (items) => {
-        console.log(items);
-        const { receiver, pickupTime, distance, price } = items;
+  // CREATE SHIPMENT
+  const createShipment = async (items) => {
+    console.log(items);
+    const { receiver, pickupTime, distance, price } = items;
 
-        try {
-            if (!window.ethereum) throw new Error("Install MetaMask");
+    try {
+      if (!window.ethereum) throw new Error("Install MetaMask");
 
-            const web3Modal = new Web3Modal();
-            const connection = await web3Modal.connect();
-            const provider = new ethers.BrowserProvider(connection);
-            const signer = await provider.getSigner();
-            const contract = fetchContract(signer);
+      const web3Modal = new Web3Modal();
+      const connection = await web3Modal.connect();
+      const provider = new ethers.BrowserProvider(connection);
+      const signer = await provider.getSigner();
+      const contract = fetchContract(signer);
 
-            const createItem = await contract.createShipment(
-                receiver,
-                new Date(pickupTime).getTime(),
-                distance,
-                ethers.parseEther(price.toString()),
-                {
-                    value: ethers.parseEther(price.toString()),
-                }
-            );
-
-            await createItem.wait();
-            console.log(createItem);
-        } catch (error) {
-            console.error("Error creating shipment:", error);
+      const createItem = await contract.createShipment(
+        receiver,
+        new Date(pickupTime).getTime(),
+        distance,
+        ethers.parseEther(price.toString()),
+        {
+          value: ethers.parseEther(price.toString()),
         }
-    };
+      );
 
-    const getShipmentsCount = async () => {
-        try {
-            if (!window.ethereum) throw new Error("Install MetaMask");
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      await createItem.wait();
+      console.log(createItem);
+      fetchShipments(); // Update shipments after creating one
+    } catch (error) {
+      console.error("Error creating shipment:", error);
+    }
+  };
 
-            if (!accounts.length) {
-                console.error("No connected accounts");
-                return 0;
-            }
+  const getShipmentsCount = async () => {
+    try {
+      if (!window.ethereum) throw new Error("Install MetaMask");
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
 
-            const userAddress = accounts[0];
-            console.log("Current user address:", userAddress);
+      if (!accounts.length) {
+        console.error("No connected accounts");
+        return 0;
+      }
 
-            if (!ethers.isAddress(userAddress)) {
-                console.error("Invalid address:", userAddress);
-                return 0;
-            }
+      const userAddress = accounts[0];
+      console.log("Current user address:", userAddress);
 
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            const contract = fetchContract(signer);
-            const shipmentsCount = await contract.getShipmentsCount(userAddress);
+      if (!ethers.isAddress(userAddress)) {
+        console.error("Invalid address:", userAddress);
+        return 0;
+      }
 
-            console.log("Shipments Count:", shipmentsCount.toString());
-            return Number(shipmentsCount);
-        } catch (error) {
-            console.error("Error getting shipment count:", error);
-            return 0;
-        }
-    };
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = fetchContract(signer);
+      const shipmentsCount = await contract.getShipmentsCount(userAddress);
 
-    // GET ALL SHIPMENTS
-    const getAllShipment = async () => {
-        try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            const contract = fetchContract(signer);
+      console.log("Shipments Count:", shipmentsCount.toString());
+      return Number(shipmentsCount);
+    } catch (error) {
+      console.error("Error getting shipment count:", error);
+      return 0;
+    }
+  };
 
-            if (!window.ethereum) throw new Error("Install MetaMask");
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
-            const currentUser = accounts[0];
+  // GET ALL SHIPMENTS
+  const getAllShipment = async () => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = fetchContract(signer);
 
-            const shipmentsCount = await contract.getShipmentsCount(currentUser);
-            const shipments = [];
+      if (!window.ethereum) throw new Error("Install MetaMask");
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      const currentUser = accounts[0];
 
-            for (let i = 0; i < Number(shipmentsCount); i++) {
-                const shipment = await contract.getShipment(currentUser, i);
-                shipments.push({
-                    sender: shipment[0],
-                    receiver: shipment[1],
-                    pickupTime: Number(shipment[2]),
-                    deliveryTime: Number(shipment[3]),
-                    distance: Number(shipment[4]),
-                    price: ethers.formatEther(shipment[5]),
-                    status: shipment[6],
-                    isPaid: shipment[7],
-                });
-            }
+      const shipmentsCount = await contract.getShipmentsCount(currentUser);
+      const fetchedShipments = [];
 
-            return shipments;
-        } catch (error) {
-            console.error("Error getting shipments:", error);
-            return [];
-        }
-    };
+      for (let i = 0; i < Number(shipmentsCount); i++) {
+        const shipment = await contract.getShipment(currentUser, i);
+        fetchedShipments.push({
+          sender: shipment[0],
+          receiver: shipment[1],
+          pickupTime: Number(shipment[2]),
+          deliveryTime: Number(shipment[3]),
+          distance: Number(shipment[4]),
+          price: ethers.formatEther(shipment[5]),
+          status: shipment[6],
+          isPaid: shipment[7],
+        });
+      }
 
-    // COMPLETE SHIPMENT
-    const completeShipment = async ({ receiver, index }) => {
-        try {
-            if (!window.ethereum) throw new Error("Install MetaMask");
+      return fetchedShipments;
+    } catch (error) {
+      console.error("Error getting shipments:", error);
+      return [];
+    }
+  };
 
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
-            const web3Modal = new Web3Modal();
-            const connection = await web3Modal.connect();
-            const provider = new ethers.BrowserProvider(connection);
-            const signer = await provider.getSigner();
-            const contract = fetchContract(signer);
+  const fetchShipments = async () => {
+    const fetchedShipments = await getAllShipment();
+    setShipments(fetchedShipments);
+  };
 
-            const transaction = await contract.completeShipment(
-                accounts[0],
-                receiver,
-                index,
-                { gasLimit: 300000 }
-            );
-            await transaction.wait();
+  // COMPLETE SHIPMENT
+  const completeShipment = async ({ receiver, index }) => {
+    try {
+      if (!window.ethereum) throw new Error("Install MetaMask");
 
-            console.log(transaction);
-        } catch (error) {
-            console.error("Error completing shipment:", error);
-        }
-    };
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      const web3Modal = new Web3Modal();
+      const connection = await web3Modal.connect();
+      const provider = new ethers.BrowserProvider(connection);
+      const signer = await provider.getSigner();
+      const contract = fetchContract(signer);
 
-    // GET A SINGLE SHIPMENT
-    const getShipment = async (index) => {
-        try {
-            if (!window.ethereum) throw new Error("Install MetaMask");
+      const transaction = await contract.completeShipment(
+        accounts[0],
+        receiver,
+        index,
+        { gasLimit: 300000 }
+      );
+      await transaction.wait();
 
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
-            if (!accounts.length) throw new Error("No connected accounts");
+      console.log(transaction);
+      fetchShipments(); // Update shipments after completing one
+    } catch (error) {
+      console.error("Error completing shipment:", error);
+    }
+  };
 
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            const contract = fetchContract(signer);
+  // GET A SINGLE SHIPMENT
+  const getShipment = async (index) => {
+    try {
+      if (!window.ethereum) throw new Error("Install MetaMask");
 
-            const shipment = await contract.getShipment(accounts[0], index);
-            return {
-                sender: shipment[0],
-                receiver: shipment[1],
-                pickupTime: Number(shipment[2]),
-                deliveryTime: Number(shipment[3]),
-                distance: Number(shipment[4]),
-                price: ethers.formatEther(shipment[5]),
-                status: shipment[6],
-                isPaid: shipment[7],
-            };
-        } catch (error) {
-            console.error("Error getting shipment:", error);
-            return null;
-        }
-    };
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      if (!accounts.length) throw new Error("No connected accounts");
 
-    //  START SHIPMENT
-    const startShipment = async ({ receiver, index }) => {
-        try {
-            if (!window.ethereum) throw new Error("Install MetaMask");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = fetchContract(signer);
 
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
-            const web3Modal = new Web3Modal();
-            const connection = await web3Modal.connect();
-            const provider = new ethers.BrowserProvider(connection);
-            const signer = await provider.getSigner();
-            const contract = fetchContract(signer);
+      const shipment = await contract.getShipment(accounts[0], index);
+      return {
+        sender: shipment[0],
+        receiver: shipment[1],
+        pickupTime: Number(shipment[2]),
+        deliveryTime: Number(shipment[3]),
+        distance: Number(shipment[4]),
+        price: ethers.formatEther(shipment[5]),
+        status: shipment[6],
+        isPaid: shipment[7],
+      };
+    } catch (error) {
+      console.error("Error getting shipment:", error);
+      return null;
+    }
+  };
 
-            const shipment = await contract.startShipment(
-                accounts[0],
-                receiver,
-                index * 1
-            );
+  //  START SHIPMENT
+  const startShipment = async ({ receiver, index }) => {
+    try {
+      if (!window.ethereum) throw new Error("Install MetaMask");
 
-            await shipment.wait();
-            console.log(shipment);
-        } catch (error) {
-            console.error("Error starting shipment:", error);
-        }
-    };
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      const web3Modal = new Web3Modal();
+      const connection = await web3Modal.connect();
+      const provider = new ethers.BrowserProvider(connection);
+      const signer = await provider.getSigner();
+      const contract = fetchContract(signer);
 
-    //  CHECK WALLET CONNECTION
-    const checkIfWalletConnected = async () => {
-        try {
-            if (!window.ethereum) throw new Error("Install MetaMask");
+      const shipment = await contract.startShipment(
+        accounts[0],
+        receiver,
+        index * 1
+      );
 
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
-            if (accounts.length) {
-                setCurrentUser(accounts[0]);
-            }
-        } catch (error) {
-            console.error("Error checking wallet connection:", error);
-        }
-    };
+      await shipment.wait();
+      console.log(shipment);
+      fetchShipments(); // Update shipments after starting one
+    } catch (error) {
+      console.error("Error starting shipment:", error);
+    }
+  };
 
-    // CONNECT WALLET FUNCTION
-    const connectWallet = async () => {
-        try {
-            if (!window.ethereum) throw new Error("MetaMask is not installed!");
+  //  CHECK WALLET CONNECTION
+  const checkIfWalletConnected = async () => {
+    try {
+      if (!window.ethereum) throw new Error("Install MetaMask");
 
-            const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      if (accounts.length) {
+        setCurrentUser(accounts[0]);
+      }
+    } catch (error) {
+      console.error("Error checking wallet connection:", error);
+    }
+  };
 
-            if (!accounts.length) throw new Error("No accounts found. Please log in to MetaMask.");
+  // CONNECT WALLET FUNCTION
+  const connectWallet = async () => {
+    try {
+      if (!window.ethereum) throw new Error("MetaMask is not installed!");
 
-            setCurrentUser(accounts[0]);
-            console.log("Connected account:", accounts[0]);
-        } catch (error) {
-            console.error("Error connecting wallet:", error.message);
-            alert(error.message);
-        }
-    };
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
 
-    useEffect(() => {
-        checkIfWalletConnected();
-    }, []);
+      if (!accounts.length) throw new Error("No accounts found. Please log in to MetaMask.");
 
-    return (
-        <TrackingContext.Provider
-            value={{
-                connectWallet,
-                createShipment,
-                getAllShipment,
-                completeShipment,
-                getShipment,
-                startShipment,
-                getShipmentsCount,
-                DappName,
-                currentUser,
-            }}
-        >
-            {children}
-        </TrackingContext.Provider>
-    );
+      setCurrentUser(accounts[0]);
+      console.log("Connected account:", accounts[0]);
+    } catch (error) {
+      console.error("Error connecting wallet:", error.message);
+      alert(error.message);
+    }
+  };
+
+  useEffect(() => {
+    checkIfWalletConnected();
+    fetchShipments(); // Fetch shipments on initial load
+  }, []);
+
+  return (
+    <TrackingContext.Provider
+      value={{
+        connectWallet,
+        createShipment,
+        getAllShipment,
+        completeShipment,
+        getShipment,
+        startShipment,
+        getShipmentsCount,
+        DappName,
+        currentUser,
+        shipments, // Provide shipments to the context
+      }}
+    >
+      {children}
+    </TrackingContext.Provider>
+  );
 };

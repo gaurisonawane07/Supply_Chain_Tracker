@@ -67,7 +67,7 @@ export default () => {
           <div className="flex-1 flex justify-end mt-6 space-y-6 md:flex md:space-y-0 md:mt-0">
             {currentUser  ? (
               <p className="flex items-center justify-center gap-x-1 py-2 px-4 
-              text-white font-medium bg-grey-800 hover:bg-gray-700 active:bg-gray-900
+              text-gray-700 font-medium bg-grey-800 hover:bg-gray-700 active:bg-gray-900
               rounded-full md:inline-flex">
                 {currentUser .slice(0, 25)}..
               </p>
@@ -75,7 +75,7 @@ export default () => {
               <button
                 onClick={() => connectWallet()}
                 className="flex items-center justify-center gap-x-1 py-2 px-4 
-                text-white font-medium bg-gray-800 hover:bg-gray-700 active:bg-gray-900
+                text-gray-800 font-medium bg-gray-800 hover:bg-gray-700 active:bg-gray-900
                 rounded-full md:inline-flex"
               >
                 Connect Wallet
