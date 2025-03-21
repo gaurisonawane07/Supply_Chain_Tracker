@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.28;
 
 contract Tracking {
     enum ShipmentStatus { PENDING, IN_TRANSIT, DELIVERED }
@@ -11,16 +11,16 @@ contract Tracking {
         uint256 deliveryTime;
         uint256 distance;
         uint256 price;
-        ShipmentStatus status;
+        ShipmentStatus status; // Use ShipmentStatus enum
         bool isPaid;
     }
 
     mapping(address => Shipment[]) public shipments;
     uint256 public shipmentCount;
 
-    event ShipmentCreated(address indexed sender, address indexed receiver, uint256 pickupTime, uint256 distance, uint256 price);
-    event ShipmentInTransit(address indexed sender, address indexed receiver, uint256 pickupTime);
-    event ShipmentDelivered(address indexed sender, address indexed receiver, uint256 deliveryTime);
+    event ShipmentCreated(address indexed sender, address indexed receiver, uint256 pickupTime, uint256 distance, uint256 price, ShipmentStatus status);
+    event ShipmentInTransit(address indexed sender, address indexed receiver, uint256 pickupTime, ShipmentStatus status);
+    event ShipmentDelivered(address indexed sender, address indexed receiver, uint256 deliveryTime, ShipmentStatus status);
     event ShipmentPaid(address indexed sender, address indexed receiver, uint256 amount);
 
     constructor() {
@@ -44,7 +44,7 @@ contract Tracking {
         shipments[msg.sender].push(shipment);
         shipmentCount++;
 
-        emit ShipmentCreated(msg.sender, _receiver, _pickupTime, _distance, _price);
+        emit ShipmentCreated(msg.sender, _receiver, _pickupTime, _distance, _price, ShipmentStatus.PENDING);
     }
 
     function startShipment(address _sender, address _receiver, uint256 _index) public {
@@ -56,7 +56,7 @@ contract Tracking {
 
         shipment.status = ShipmentStatus.IN_TRANSIT;
 
-        emit ShipmentInTransit(_sender, _receiver, shipment.pickupTime);
+        emit ShipmentInTransit(_sender, _receiver, shipment.pickupTime, ShipmentStatus.IN_TRANSIT);
     }
 
     function completeShipment(address _sender, address _receiver, uint256 _index) public {
@@ -74,16 +74,16 @@ contract Tracking {
         payable(shipment.sender).transfer(amount);
         shipment.isPaid = true;
 
-        emit ShipmentDelivered(_sender, _receiver, shipment.deliveryTime);
+        emit ShipmentDelivered(_sender, _receiver, shipment.deliveryTime, ShipmentStatus.DELIVERED);
         emit ShipmentPaid(_sender, _receiver, amount);
     }
 
     function getShipment(address _sender, uint256 _index) public view returns (address, address, uint256, uint256, uint256, uint256, ShipmentStatus, bool) {
-    require(_index < shipments[_sender].length, "Invalid shipment index");
-    Shipment memory shipment = shipments[_sender][_index];
+        require(_index < shipments[_sender].length, "Invalid shipment index");
+        Shipment memory shipment = shipments[_sender][_index];
 
-    return (shipment.sender, shipment.receiver, shipment.pickupTime, shipment.deliveryTime, shipment.distance, shipment.price, shipment.status, shipment.isPaid);
-}
+        return (shipment.sender, shipment.receiver, shipment.pickupTime, shipment.deliveryTime, shipment.distance, shipment.price, shipment.status, shipment.isPaid);
+    }
 
     function getShipmentsCount(address _sender) public view returns (uint256) {
         return shipments[_sender].length;

@@ -66,7 +66,8 @@ export default ({ setCreateShipmentModel, createShipmentModel, createShipment })
         <div className="max-w-sm mx-auto py-3 space-y-3 text-center">
           <h4 className="text-lg font-medium text-gray-800">Track product, Create Shipment</h4>
           <p className="text-[15px] text-gray-600">
-            Ut enim ad snchd sjndek mnu wuendh sasdhe uqnvc achr nbjhbh bcye mnxas swkjs xjsn asn dcnde.
+          Experience a new level of transparency and traceability in your
+          supply chain, secured by blockchain's immutable ledger.
           </p>
           <form onSubmit={(e) => e.preventDefault()}>
             <div className="relative mt-3">

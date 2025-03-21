@@ -25,10 +25,10 @@ export default function ShipmentCount({ shipments }) {
   };
 
   return (
-    <div className="relative">
+    <div className="flex justify-center mt-4"> {/* Center horizontally and add margin-top */}
       <button
         onClick={handleShowCard}
-        className="block mt-3 py-3 px-4 font-medium text-sm text-center text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 rounded-lg ring-offset-2 ring-indigo-600 focus:ring-2"
+        className="py-3 px-4 font-medium text-sm text-center text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 rounded-lg ring-offset-2 ring-indigo-600 focus:ring-2"
       >
         Get Shipments Count
       </button>
@@ -50,7 +50,9 @@ export default function ShipmentCount({ shipments }) {
                 </button>
               </div>
               <div className="max-w-sm mx-auto py-3 space-y-3 text-center">
-                <h4 className="text-lg font-medium text-gray-800">Shipment Options</h4>
+                <h4 className="text-lg font-medium text-gray-800">
+                  Shipment Options
+                </h4>
                 <button
                   onClick={handleShowCount}
                   className="block w-full mt-3 py-3 px-4 font-medium text-sm text-center text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 rounded-lg ring-offset-2 ring-indigo-600 focus:ring-2"
@@ -59,7 +61,9 @@ export default function ShipmentCount({ shipments }) {
                 </button>
                 {showCount && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-600">Total Shipments: {shipmentCount}</p>
+                    <p className="text-sm text-gray-600">
+                      Total Shipments: {shipmentCount}
+                    </p>
                   </div>
                 )}
               </div>

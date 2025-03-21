@@ -10,7 +10,7 @@ import {
   CompleteShipment,
   GetShipment,
   StartShipment,
-  ShipmentCount, // Import ShipmentCount
+  ShipmentCount,
 } from "@/components/page";
 
 import { TrackingContext } from "@/context/TrackingContext";
@@ -34,62 +34,81 @@ const Page = () => {
   const [getModal, setGetModal] = useState(false);
 
   // DATA STATE VARIABLE
-  const [allShipmentsdata, setallShipmentsdata] = useState([]); // Initialize as empty array
+  const [allShipmentsdata, setallShipmentsdata] = useState([]);
+  const [loading, setLoading] = useState(true); // Added loading state
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const allData = await getAllShipment();
+      setallShipmentsdata(allData);
+    } catch (error) {
+      console.error("Error fetching shipments:", error);
+      setallShipmentsdata([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const allData = await getAllShipment();
-        setallShipmentsdata(allData);
-      } catch (error) {
-        console.error("Error fetching shipments:", error);
-        setallShipmentsdata([]); // Set to empty array on error
-      }
-    };
-    fetchData();
+    fetchData(); // Fetch data on mount
   }, [getAllShipment]); // Add getAllShipment as dependency
+
+  // Function to refetch data after shipment actions
+  const handleShipmentAction = async () => {
+    await fetchData();
+  };
 
   return (
     <>
-      <Services
-        setOpenProfile={setOpenProfile}
-        setCompleteModal={setCompleteModal}
-        setGetModal={setGetModal}
-        setStartModal={setStartModal}
-      />
-      <Table
-        setCreateShipmentModel={setCreateShipmentModel}
-        allShipmentsdata={allShipmentsdata}
-      />
-      <Form
-        createShipmentModel={createShipmentModel}
-        createShipment={createShipment}
-        setCreateShipmentModel={setCreateShipmentModel}
-      />
-      <Profile
-        openProfile={openProfile}
-        setOpenProfile={setOpenProfile}
-        currentUser={currentUser}
-        getShipmentsCount={getShipmentsCount}
-      />
-      <CompleteShipment
-        completemodal={completemodal}
-        setCompleteModal={setCompleteModal}
-        completeShipment={completeShipment}
-      />
-      <GetShipment
-        getModal={getModal}
-        getShipment={getShipment}
-        getShipmentsCount={getShipmentsCount}
-        currentUser={currentUser}
-        setGetModal={setGetModal}
-      />
-      <StartShipment
-        startModal={startModal}
-        setStartModal={setStartModal}
-        startShipment={startShipment}
-      />
-      <ShipmentCount shipments={allShipmentsdata} />
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <>
+          <Services
+            setOpenProfile={setOpenProfile}
+            setCompleteModal={setCompleteModal}
+            setGetModal={setGetModal}
+            setStartModal={setStartModal}
+          />
+          <Table
+            setCreateShipmentModel={setCreateShipmentModel}
+            allShipmentsdata={allShipmentsdata}
+          />
+          <Form
+            createShipmentModel={createShipmentModel}
+            createShipment={createShipment}
+            setCreateShipmentModel={setCreateShipmentModel}
+            onShipmentAction={handleShipmentAction} // Pass refetch function
+          />
+          <Profile
+            openProfile={openProfile}
+            setOpenProfile={setOpenProfile}
+            currentUser={currentUser}
+            getShipmentsCount={getShipmentsCount}
+          />
+          <CompleteShipment
+            completemodal={completemodal}
+            setCompleteModal={setCompleteModal}
+            completeShipment={completeShipment}
+            onShipmentAction={handleShipmentAction} // Pass refetch function
+          />
+          <GetShipment
+            getModal={getModal}
+            getShipment={getShipment}
+            getShipmentsCount={getShipmentsCount}
+            currentUser={currentUser}
+            setGetModal={setGetModal}
+          />
+          <StartShipment
+            startModal={startModal}
+            setStartModal={setStartModal}
+            startShipment={startShipment}
+            onShipmentAction={handleShipmentAction} // Pass refetch function
+          />
+          <ShipmentCount shipments={allShipmentsdata} />
+        </>
+      )}
     </>
   );
 };
