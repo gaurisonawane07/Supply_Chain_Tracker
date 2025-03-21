@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useContext } from "react";
+import { ClipLoader } from "react-spinners"; // Import the spinner
 
 // INTERNAL IMPORT
 import {
@@ -34,17 +35,28 @@ const Page = () => {
   const [getModal, setGetModal] = useState(false);
 
   // DATA STATE VARIABLE
-  const [allShipmentsdata, setallShipmentsdata] = useState([]);
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [shipmentBuffer, setShipmentBuffer] = useState([]); // Use a buffer
+  const [loading, setLoading] = useState(true);
+  const BUFFER_CAPACITY = 10; // Adjust buffer size as needed
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const allData = await getAllShipment();
-      setallShipmentsdata(allData);
+      // Update buffer with latest data
+      setShipmentBuffer((prevBuffer) => {
+        const newBuffer = [...prevBuffer];
+        allData.forEach((shipment) => {
+          if (newBuffer.length >= BUFFER_CAPACITY) {
+            newBuffer.shift(); // Remove oldest item if buffer is full
+          }
+          newBuffer.push(shipment); // Add new item
+        });
+        return newBuffer;
+      });
     } catch (error) {
       console.error("Error fetching shipments:", error);
-      setallShipmentsdata([]);
+      setShipmentBuffer([]);
     } finally {
       setLoading(false);
     }
@@ -62,7 +74,17 @@ const Page = () => {
   return (
     <>
       {loading ? (
-        <p>Loading...</p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh", // Center vertically on the whole page
+            width: "100vw", // Center horizontally on the whole page
+          }}
+        >
+          <ClipLoader color="#36D7B7" loading={loading} size={50} />
+        </div>
       ) : (
         <>
           <Services
@@ -73,13 +95,13 @@ const Page = () => {
           />
           <Table
             setCreateShipmentModel={setCreateShipmentModel}
-            allShipmentsdata={allShipmentsdata}
+            allShipmentsdata={shipmentBuffer} // Use buffer data
           />
           <Form
             createShipmentModel={createShipmentModel}
             createShipment={createShipment}
             setCreateShipmentModel={setCreateShipmentModel}
-            onShipmentAction={handleShipmentAction} // Pass refetch function
+            onShipmentAction={handleShipmentAction}
           />
           <Profile
             openProfile={openProfile}
@@ -91,7 +113,7 @@ const Page = () => {
             completemodal={completemodal}
             setCompleteModal={setCompleteModal}
             completeShipment={completeShipment}
-            onShipmentAction={handleShipmentAction} // Pass refetch function
+            onShipmentAction={handleShipmentAction}
           />
           <GetShipment
             getModal={getModal}
@@ -104,9 +126,9 @@ const Page = () => {
             startModal={startModal}
             setStartModal={setStartModal}
             startShipment={startShipment}
-            onShipmentAction={handleShipmentAction} // Pass refetch function
+            onShipmentAction={handleShipmentAction}
           />
-          <ShipmentCount shipments={allShipmentsdata} />
+          <ShipmentCount shipments={shipmentBuffer} />
         </>
       )}
     </>

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Str1 } from "./page";
 
 export default ({ getModal, setGetModal, getShipment, getShipmentsCount, currentUser }) => {
-    const [index, setIndex] = useState(0);
+    const [userId, setUserId] = useState(""); // User-entered shipment ID
+    const [index, setIndex] = useState(0); // Actual index to send to contract
     const [singleShipmentData, setSingleShipmentData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -14,12 +15,26 @@ export default ({ getModal, setGetModal, getShipment, getShipmentsCount, current
         setError(null);
         try {
             const shipmentsCount = await getShipmentsCount();
-            if (index < 0 || index >= shipmentsCount) {
-                setError("Invalid shipment ID.");
+            const parsedUserId = parseInt(userId);
+
+            if (isNaN(parsedUserId) || parsedUserId <= 0) {
+                setError("Please enter a valid shipment ID.");
                 setSingleShipmentData(null);
+                setIsLoading(false);
                 return;
             }
-            const getData = await getShipment(index);
+
+            const actualIndex = parsedUserId - 1;
+
+            if (actualIndex < 0 || actualIndex >= shipmentsCount) {
+                setError("Invalid shipment ID.");
+                setSingleShipmentData(null);
+                setIsLoading(false);
+                return;
+            }
+
+            setIndex(actualIndex);
+            const getData = await getShipment(actualIndex);
             setSingleShipmentData(getData);
             console.log("Fetched data:", getData);
         } catch (err) {
@@ -33,11 +48,14 @@ export default ({ getModal, setGetModal, getShipment, getShipmentsCount, current
 
     const convertTime = (time) => {
         if (!time) return "N/A";
-        const newTime = new Date(time);
+        const newTime = new Date(time * 1000); // Multiply by 1000 for milliseconds
         const dataTime = new Intl.DateTimeFormat("en-US", {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
         }).format(newTime);
         return dataTime;
     };
@@ -68,9 +86,9 @@ export default ({ getModal, setGetModal, getShipment, getShipmentsCount, current
                             <div className="relative mt-3">
                                 <input
                                     type="number"
-                                    placeholder="Id"
+                                    placeholder="Shipment ID"
                                     className="w-full pl-5 pr-3 py-2 text-black bg-transparent outline-none border focus:border-indigo-600 shadow-sm rounded-lg"
-                                    onChange={(e) => setIndex(e.target.value)}
+                                    onChange={(e) => setUserId(e.target.value)}
                                 />
                             </div>
                             <button
@@ -84,21 +102,21 @@ export default ({ getModal, setGetModal, getShipment, getShipmentsCount, current
                         {error && <p className="text-red-500">{error}</p>}
                         {singleShipmentData && (
                             <div className="text-left">
-                            <p className="text-black">Sender: {singleShipmentData.sender?.slice(0, 25) || "N/A"}...</p>
-                            <p className="text-black">Receiver: {singleShipmentData.receiver?.slice(0, 25) || "N/A"}...</p>
-                            <p className="text-black">PickupTime: {convertTime(singleShipmentData.pickupTime)}</p>
-                            <p className="text-black">DeliveryTime: {convertTime(singleShipmentData.deliveryTime)}</p>
-                            <p className="text-black">Distance: {singleShipmentData.distance || "N/A"}</p>
-                            <p className="text-black">Price: {singleShipmentData.price || "N/A"}</p>
-                            <p className="text-black">Status: {singleShipmentData.status || "N/A"}</p>
-                            <p className="text-black">Paid: {singleShipmentData.isPaid ? "Complete" : "Not Complete"}</p>
-                        </div>
+                                <p className="text-black">Sender: {singleShipmentData.sender?.slice(0, 25) || "N/A"}...</p>
+                                <p className="text-black">Receiver: {singleShipmentData.receiver?.slice(0, 25) || "N/A"}...</p>
+                                <p className="text-black">Pickup Time: {convertTime(singleShipmentData.pickupTime)}</p>
+                                <p className="text-black">Delivery Time: {convertTime(singleShipmentData.deliveryTime)}</p>
+                                <p className="text-black">Distance: {singleShipmentData.distance || "N/A"}</p>
+                                <p className="text-black">Price: {singleShipmentData.price || "N/A"}</p>
+                                <p className="text-black">Status: {singleShipmentData.status || "N/A"}</p>
+                                <p className="text-black">Paid: {singleShipmentData.isPaid ? "Complete" : "Not Complete"}</p>
+                            </div>
                         )}
                     </div>
                 </div>
             </div>
         </div>
     ) : (
-        " "
+        ""
     );
 };
