@@ -28,10 +28,10 @@ export default ({ startModal, setStartModal, startShipment, onShipmentAction }) 
     setIsLoading(true);
 
     try {
-      await startShipment(shipmentData); // Assuming startShipment is async
+      await startShipment(shipmentData); 
       setStartModal(false);
-      setShipmentData({ receiver: "", index: "" }); // Clear inputs
-      onShipmentAction(); // Refetch data
+      setShipmentData({ receiver: "", index: "" });
+      onShipmentAction(); 
     } catch (err) {
       console.error("Shipment failed:", err);
       setError("Failed to start shipment. Please try again.");

@@ -35,9 +35,9 @@ const Page = () => {
   const [getModal, setGetModal] = useState(false);
 
   // DATA STATE VARIABLE
-  const [shipmentBuffer, setShipmentBuffer] = useState([]); // Use a buffer
+  const [shipmentBuffer, setShipmentBuffer] = useState([]);
   const [loading, setLoading] = useState(true);
-  const BUFFER_CAPACITY = 10; // Adjust buffer size as needed
+  const BUFFER_CAPACITY = 10; 
 
   const fetchData = async () => {
     setLoading(true);

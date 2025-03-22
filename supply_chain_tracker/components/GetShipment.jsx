@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Str1 } from "./page";
 
 export default ({ getModal, setGetModal, getShipment, getShipmentsCount, currentUser }) => {
-    const [userId, setUserId] = useState(""); // User-entered shipment ID
-    const [index, setIndex] = useState(0); // Actual index to send to contract
+    const [userId, setUserId] = useState(""); 
+    const [index, setIndex] = useState(0); 
     const [singleShipmentData, setSingleShipmentData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -48,7 +48,7 @@ export default ({ getModal, setGetModal, getShipment, getShipmentsCount, current
 
     const convertTime = (time) => {
         if (!time) return "N/A";
-        const newTime = new Date(time * 1000); // Multiply by 1000 for milliseconds
+        const newTime = new Date(time * 1000); 
         const dataTime = new Intl.DateTimeFormat("en-US", {
             year: "numeric",
             month: "2-digit",
